@@ -1,0 +1,6 @@
+name: Nick
+version: 0.1-DEV
+author: Timeout
+description: A simple NickPlugin
+
+main: de.timeout.nick.Nick
