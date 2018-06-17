@@ -1,0 +1,8 @@
+# English Languagepack for NickSystem
+# Version 1.0
+# Author: Timeout
+
+# This is the default languageconfiguration. All Chatcodes and Colors must be written with '&' instead of '§'.
+
+# The prefix of the plugin
+prefix: '&8[&6Nick&8]'

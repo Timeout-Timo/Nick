@@ -1,0 +1,7 @@
+# Default Nick Configuration
+
+# Prefix of the nicked player
+nickprefix: '&7'
+
+# Language of system:
+language: 'de_DE'

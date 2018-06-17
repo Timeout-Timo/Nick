@@ -1,0 +1,13 @@
+# Deutsches Sprachpaket für NickSystem
+# Version 1.0
+# Autor: Timeout
+
+# Dies ist die Standardkonfigurationsdatei für das Plugin. Alle Farbcodes werden mit '&' statt '§' geschrieben.
+
+# Das Plugin-Prefix
+prefix: '&8[&6Nick&8] '
+
+nick:
+  # Wenn sich ein Spieler nickt
+  enable: '&7Das &6Nicktool &7wurde aktiviert. Dein Nickname ist &a[nick]'
+  disable: '&7Das &6Nicktool wurde &cdeaktiviert.'
