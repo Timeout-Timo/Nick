@@ -27,24 +27,28 @@ public class TabDisguiseManager implements Listener {
 	
 	@EventHandler
 	public void onTabComplete(PlayerChatTabCompleteEvent event) {
-		String[] split = event.getChatMessage().split(" ");
-		String suggest = split[split.length -1];
 		List<String> completitions = (List<String>)event.getTabCompletions();
-		for(int i = 0; i < completitions.size(); i++) {
-			Player p = Bukkit.getServer().getPlayer(completitions.get(i));
-			if(main.isNicked(p)) {
-				String nicked = main.getNickname(p);
-				completitions.set(i, nicked);
-				
-				if(nicked.toLowerCase().startsWith(suggest.toLowerCase())) {
-					String first = completitions.get(0);
-					completitions.set(0, nicked);
-					completitions.set(i, first);
-				}
-			}	
+		String[] split = event.getChatMessage().split(" ");
+		try {
+			String suggest = split[split.length -1];
+			for(int i = 0; i < completitions.size(); i++) {
+				Player p = Bukkit.getServer().getPlayer(completitions.get(i));
+				if(main.isNicked(p)) {
+					String nicked = main.getNickname(p);
+					completitions.set(i, nicked);
+					
+					if(nicked.toLowerCase().startsWith(suggest.toLowerCase())) {
+						String first = completitions.get(0);
+						completitions.set(0, nicked);
+						completitions.set(i, first);
+					}
+				}	
+			}
+		} catch(ArrayIndexOutOfBoundsException e) {
+		} finally {
+			Field field = Reflections.getField(PlayerChatTabCompleteEvent.class, "completions");
+			Reflections.setField(field, event, completitions);
 		}
-		Field field = Reflections.getField(PlayerChatTabCompleteEvent.class, "completions");
-		Reflections.setField(field, event, completitions);
 	}
 
 	public static void readCommandTabComplete() {

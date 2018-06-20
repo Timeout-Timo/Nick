@@ -6,3 +6,31 @@
 
 # The prefix of the plugin
 prefix: '&8[&6Nick&8]'
+
+nick:
+  # If the player nicks
+  enable: '&7The &6nicktool &7is activated. Your new nickname is &a[nick]'
+  # If the nickname equals the player's name
+  samename: '&cPlease choose a nickname which isn't similar to you normal name.'
+  # If the nickname is in use
+  invalidName: 'This nickname isn't aviable.'
+  
+unnick:
+  # If the player isn't nicked
+  notNicked: '&cYou aren't nicked.'
+  # Unnickmessage
+  unnick: '&7Your &6nickname &7is removed'
+  
+check:
+  # If the player isn't online
+  notOnline: '&cThe player [name] isn't online.'
+  # If the player isn't nicked
+  notNicked: '&cThe player [name] isn't nicked.'
+  # if the check is sucessful
+  check: '&7The player&2 [name] &7is nicked as&a [nick]&7.'
+  
+util:
+  # If the player doesn't have permission
+  permissions: '&cYou aren't permited to execute this command'
+  # If the player writes the false command
+  falseCommand: 'Do you mean:&6 [command] &7?'
