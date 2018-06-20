@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import de.timeout.nick.Nick;
+import de.timeout.nick.manager.NickManager;
 
 public class CheckCommand implements CommandExecutor {
 	
@@ -25,7 +26,7 @@ public class CheckCommand implements CommandExecutor {
 		if(sender.hasPermission("nick.check")) {
 			if(args.length == 1) {
 				String name = args[0];
-				if(Bukkit.getServer().getOfflinePlayer(name).isOnline()) {
+				if(Bukkit.getServer().getOfflinePlayer(name).isOnline() || NickManager.usedNames.contains(name)) {
 					Player t = Bukkit.getServer().getPlayer(name);
 					if(main.isNicked(t)) {
 						String nick = main.getNickname(t);
