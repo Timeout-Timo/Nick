@@ -58,21 +58,15 @@ public class NickManager {
 	
 	public static void sendNickPackets(Player player, String nick, boolean disguise, Player... sendedPlayers) {
 		MojangGameProfile profile = profileCache.containsKey(nick) ? profileCache.get(nick) : new MojangGameProfile(nick);
-		sendPackets(player, nick, profile, disguise, sendedPlayers);
-		player.setDisplayName(nickedPrefix + nick);
-		player.setPlayerListName(nickedPrefix + nick);
-		player.setCustomName(nick);
+		sendPackets(player, nick, profile, disguise, sendedPlayers, nickedPrefix);
 	}
 	
 	public static void sendUnnickPackets(Player player, Player... sendedPlayers) {
 		MojangGameProfile profile = profileCache.containsKey(player.getName().toLowerCase()) ? profileCache.get(player.getName().toLowerCase()) : new MojangGameProfile(player);
-		sendPackets(player, player.getName(), profile, false, sendedPlayers);
-		player.setDisplayName(player.getName());
-		player.setPlayerListName(player.getName());
-		player.setCustomName(player.getName());
+		sendPackets(player, player.getName(), profile, false, sendedPlayers, "");
 	}
 	
-	private static void sendPackets(Player player, String nick, MojangGameProfile profile, boolean disguise, Player[] sendedPlayers) {
+	private static void sendPackets(Player player, String nick, MojangGameProfile profile, boolean disguise, Player[] sendedPlayers, String prefix) {
 		if(!disguise)nickedPlayerCache.add(player);
 		int level = player.getLevel();
 		double health = player.getHealth();
@@ -135,6 +129,9 @@ public class NickManager {
 											if(!pl.getName().equalsIgnoreCase(player.getName()))manager.sendServerPacket(pl, PacketContainer.fromPacket(spawn));
 										}
 										nickedPlayerCache.remove(player);
+										player.setDisplayName(prefix + nick);
+										player.setPlayerListName(prefix + nick);
+										player.setCustomName(nick);
 									} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 											| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
 										e1.printStackTrace();
