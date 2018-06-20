@@ -10,4 +10,27 @@ prefix: '&8[&6Nick&8] '
 nick:
   # Wenn sich ein Spieler nickt
   enable: '&7Das &6Nicktool &7wurde aktiviert. Dein Nickname ist &a[nick]'
-  disable: '&7Das &6Nicktool wurde &cdeaktiviert.'
+  # Wenn der Nickname gleich dem Spielername ist
+  samename: '&cBitte wähle einen Nicknamen, der nicht deinem eigenem Namen entspricht.'
+  # Wenn der Nickname bereits vergeben ist
+  invalidName: '&cDieser Nickname ist nicht mehr verfügbar.'
+  
+unnick:
+  # Wenn der Spieler nicht genickt ist
+  notNicked: '&cDu bist nicht genickt'
+  # Erfolgreich entnickt
+  unnick: '&7Dein &6Nickname &7wurde &centfernt'
+  
+check:
+  # Wenn der Spieler nicht online ist.
+  notOnline: '&cDer Spieler [name] ist nicht online.'
+  # Wenn der Spieler nicht genickt ist.
+  notNicked: '&7Der Spieler [name] ist nicht &6genickt&7.'
+  # Wenn der CheckCommand erfolgreich war.
+  check: '&7Der Spieler&2 [name] &7ist momentan&a [nick]&7.'
+  
+util:
+  # Wenn der Spieler keine Permissions hat
+  permissions: '&cDu hast nicht die benötigte Berechtigung, diesen Befehl auszuführen.'
+  # Wenn der Spieler den Befehl falsch eingegeben hat.
+  falseCommand: '&7Meintest du vielleicht:&6 [command] &7?'

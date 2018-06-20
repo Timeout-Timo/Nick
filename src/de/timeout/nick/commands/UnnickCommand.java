@@ -14,6 +14,10 @@ import de.timeout.nick.manager.NickManager;
 public class UnnickCommand implements CommandExecutor {
 	
 	private Nick main = Nick.plugin;
+	
+	private String prefix = main.getLanguage("prefix");
+	private String notNicked = main.getLanguage("unnick.notNicked");
+	private String unnick = main.getLanguage("unnick.unnick");
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -28,8 +32,9 @@ public class UnnickCommand implements CommandExecutor {
 					main.removeNick(p);
 					NickManager.sendUnnickPackets(p, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));
 					DatabaseManager.cacheNicked();
+					p.sendMessage(prefix + unnick);
 				}
-			}
+			} else p.sendMessage(prefix + notNicked);
 		}
 		return false;
 	}

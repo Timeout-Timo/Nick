@@ -11,7 +11,11 @@ commands:
     description: Nicks a Player
   unnick:
     description: Unnicks a Player
+  check:
+    description: Check a player, if he's nicked.
     
 permissions:
   nick.nick:
     description: Needed for /nick
+  nick.check:
+    description: Needed for /check

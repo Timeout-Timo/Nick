@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import de.timeout.nick.commands.CheckCommand;
 import de.timeout.nick.commands.NickCommand;
 import de.timeout.nick.commands.UnnickCommand;
 import de.timeout.nick.manager.DisguiseManager;
@@ -55,11 +56,11 @@ public class Nick extends JavaPlugin {
 	private void registerCommands() {
 		this.getCommand("nick").setExecutor(new NickCommand());
 		this.getCommand("unnick").setExecutor(new UnnickCommand());
+		this.getCommand("check").setExecutor(new CheckCommand());
 	}
 	
 	private void registerPacketListener() {
 		TabDisguiseManager.readCommandTabComplete();
-//		JoinDisguiser.addPacketListener();
 	}
 	
 	public String getLanguage(String path) {
