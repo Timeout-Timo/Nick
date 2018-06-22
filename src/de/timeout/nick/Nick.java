@@ -1,6 +1,7 @@
 package de.timeout.nick;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import de.timeout.nick.commands.UnnickCommand;
 import de.timeout.nick.manager.DisguiseManager;
 import de.timeout.nick.manager.JoinDisguiser;
 import de.timeout.nick.manager.TabDisguiseManager;
+import de.timeout.nick.utils.MySQL;
+import de.timeout.nick.utils.SQLManager;
 import de.timeout.nick.utils.UTFConfig;
 
 public class Nick extends JavaPlugin {
@@ -24,6 +27,7 @@ public class Nick extends JavaPlugin {
 
 	private UTFConfig config;
 	
+	private boolean mysql;
 	private HashMap<Player, String> disguisedPlayers = new HashMap<Player, String>();
 	
 	@Override
@@ -31,14 +35,41 @@ public class Nick extends JavaPlugin {
 		plugin = this;
 		ConfigCreator.loadConfigs();
 		config = new UTFConfig(new File(getDataFolder(), "config.yml"));
+		mysql = getConfig().getBoolean("mysql");
 		
 		registerListener();
 		registerPacketListener();
 		registerCommands();
+		
+		if(mysql) {
+			MySQL.connect(getConfig().getString("mysql.host"), getConfig().getInt("mysql.port"),
+				getConfig().getString("mysql.database"), getConfig().getString("mysql.username"), getConfig().getString("mysql.password"));
+			
+			if(MySQL.isConnected()) {
+				try {
+					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))");
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			} else {
+				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionFailed"));
+				mysql = !mysql;
+			}
+		}
 	}
 
 	@Override
 	public void onDisable() {
+		if(sqlEnabled()) {
+			try {
+				disguisedPlayers.keySet().forEach(p -> {
+					SQLManager.cacheNicked(p.getUniqueId(), disguisedPlayers.get(p));
+				});
+			} finally {
+				MySQL.disconnect();
+				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.disconnect"));
+			}
+		}
 
 	}
 	
@@ -65,6 +96,10 @@ public class Nick extends JavaPlugin {
 	
 	public String getLanguage(String path) {
 		return ConfigManager.getLanguageConfig().getString(path).replaceAll("&", "§");
+	}
+	
+	public boolean sqlEnabled() {
+		return mysql;
 	}
 	
 	public void addNick(Player player, String name) {

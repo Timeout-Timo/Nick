@@ -10,6 +10,7 @@ import de.timeout.nick.DatabaseManager;
 import de.timeout.nick.Nick;
 import de.timeout.nick.events.PlayerUnnickEvent;
 import de.timeout.nick.manager.NickManager;
+import de.timeout.nick.utils.SQLManager;
 
 public class UnnickCommand implements CommandExecutor {
 	
@@ -31,7 +32,8 @@ public class UnnickCommand implements CommandExecutor {
 					NickManager.usedNames.remove(name.toLowerCase());
 					main.removeNick(p);
 					NickManager.sendUnnickPackets(p, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));
-					DatabaseManager.cacheNicked();
+					if(!main.sqlEnabled())DatabaseManager.cacheNicked();
+					else SQLManager.removeNicked(event.getPlayer().getUniqueId());
 					p.sendMessage(prefix + unnick);
 				}
 			} else p.sendMessage(prefix + notNicked);

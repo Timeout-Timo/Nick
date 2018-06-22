@@ -30,6 +30,7 @@ import de.timeout.nick.Nick;
 import de.timeout.nick.events.PlayerNickEvent;
 import de.timeout.nick.utils.MojangGameProfile;
 import de.timeout.nick.utils.Reflections;
+import de.timeout.nick.utils.SQLManager;
 
 /*	Abläufe beim PlayerLogin.
  * 
@@ -49,11 +50,12 @@ public class JoinDisguiser implements Listener {
 	
 	@EventHandler
 	public void registerPlayer(AsyncPlayerPreLoginEvent event) {
-		List<UUID> list = DatabaseManager.getNickedList();
-		for(UUID uuid : list) System.out.println(uuid.toString() + "<- Aus JSON");
-		if(list.contains(event.getUniqueId())) {
-			nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
-		}
+		if(!main.sqlEnabled()) {
+			List<UUID> list = DatabaseManager.getNickedList();
+			if(list.contains(event.getUniqueId())) {
+				nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
+			}
+		} else if(SQLManager.isInDatabase(event.getUniqueId()))nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
 	}
 	
 	@EventHandler
@@ -99,7 +101,6 @@ public class JoinDisguiser implements Listener {
 								UUID id = data.getProfile().getUUID();
 								if(nickCache.containsKey(data.getProfile().getUUID())) {
 									GameProfile profile = new MojangGameProfile(nickCache.get(id)).getProfile();
-									System.out.println(nickCache.get(id));
 									Reflections.setField(uuidField, profile, data.getProfile().getUUID());
 									
 									Object[] craftchatmessage = (Object[]) craftchatmessageClass.getMethod("fromString", String.class).invoke(craftchatmessageClass, profile.getName());

@@ -29,6 +29,14 @@ check:
   # Wenn der CheckCommand erfolgreich war.
   check: '&7Der Spieler&2 [name] &7ist momentan&a [nick]&7.'
   
+mysql:
+  # Wenn die Verbindung zur Datenbank nicht möglich ist
+  connectionFailed: '&cDer Verbindungsaufbau zur MySQL-Datenbank ist fehlgeschlagen. Schalte auf File-Support um.'
+  # Wenn die Verbindung zur Datenbank erfolgreich ist
+  connectionSuccess: '&7Die &fMySQL-Verbindung &7wurde erfolgreich &aaufgebaut'
+  # Wenn die MySQL-Verbindung getrennt wird
+  disconnect: '&7Die &fMySQL-Verbindung &7wurde &cgetrennt&7.'
+  
 util:
   # Wenn der Spieler keine Permissions hat
   permissions: '&cDu hast nicht die benötigte Berechtigung, diesen Befehl auszuführen.'

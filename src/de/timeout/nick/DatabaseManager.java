@@ -36,22 +36,24 @@ public class DatabaseManager {
 	}
 	
 	public static void cacheNicked() {
-		loadNicked();
-		JsonArray array = new JsonArray();
-		List<UUID> list = main.getNickedPlayers();
-		
-		list.forEach(uuid -> {
-			JsonObject obj = new JsonObject();
-			obj.addProperty("uuid", uuid.toString());
-			array.add(obj);
-		});
-		
-		try {
-			PrintWriter writer = new PrintWriter(getNickedPlayerFile());
-			writer.write(array.toString());
-			writer.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		if(!main.sqlEnabled()) {
+			loadNicked();
+			JsonArray array = new JsonArray();
+			List<UUID> list = main.getNickedPlayers();
+			
+			list.forEach(uuid -> {
+				JsonObject obj = new JsonObject();
+				obj.addProperty("uuid", uuid.toString());
+				array.add(obj);
+			});
+				
+			try {
+				PrintWriter writer = new PrintWriter(getNickedPlayerFile());
+				writer.write(array.toString());
+				writer.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

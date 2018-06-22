@@ -29,6 +29,14 @@ check:
   # if the check is sucessful
   check: '&7The player&2 [name] &7is nicked as&a [nick]&7.'
   
+mysql:
+  # If connection to MySQL failed
+  connectionFailed: '&cThe connection to the MySQL-Database failed. Start File-Support.'
+  # If connection to MySQL is successful
+  connectionSuccess: '&7The &fMySQL-Database &7is &aconnected sucessfully'
+  # In case of Disconnection
+  disconnect: '&7The &fMySQL-Database &7is &cdisconnected'
+  
 util:
   # If the player doesn't have permission
   permissions: '&cYou aren't permited to execute this command'

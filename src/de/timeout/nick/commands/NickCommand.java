@@ -13,6 +13,7 @@ import de.timeout.nick.DatabaseManager;
 import de.timeout.nick.Nick;
 import de.timeout.nick.events.PlayerNickEvent;
 import de.timeout.nick.manager.NickManager;
+import de.timeout.nick.utils.SQLManager;
 
 public class NickCommand implements CommandExecutor {
 	
@@ -42,7 +43,8 @@ public class NickCommand implements CommandExecutor {
 								main.addNick(p, event.getNick());
 								NickManager.usedNames.add(event.getNick().toLowerCase());
 								NickManager.sendNickPackets(event.getPlayer(), event.getNick(), false, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));			
-								DatabaseManager.cacheNicked();
+								if(!main.sqlEnabled())DatabaseManager.cacheNicked();
+								else SQLManager.cacheNicked(event.getPlayer().getUniqueId(), event.getNick());
 								p.sendMessage(prefix + enable.replace("[nick]", event.getNick()));
 							}
 						} else p.sendMessage(prefix + invalidName);
