@@ -7,7 +7,7 @@ nickprefix: '&7'
 language: 'de_DE'
 
 #MySQL enabled
-mysql: true
+sqlEnabled: true
 
 #Settings for MySQL
 mysql:

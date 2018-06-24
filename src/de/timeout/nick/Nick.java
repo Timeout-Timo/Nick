@@ -25,7 +25,7 @@ public class Nick extends JavaPlugin {
 	
 	public static Nick plugin;
 
-	private UTFConfig config;
+	private UTFConfig config = null;
 	
 	private boolean mysql;
 	private HashMap<Player, String> disguisedPlayers = new HashMap<Player, String>();
@@ -35,19 +35,24 @@ public class Nick extends JavaPlugin {
 		plugin = this;
 		ConfigCreator.loadConfigs();
 		config = new UTFConfig(new File(getDataFolder(), "config.yml"));
-		mysql = getConfig().getBoolean("mysql");
 				
 		registerListener();
 		registerPacketListener();
 		registerCommands();
 		
+		mysql = getConfig().getBoolean("sqlEnabled");
 		if(mysql) {
-			MySQL.connect(getConfig().getString("mysql.host"), getConfig().getInt("mysql.port"),
-				getConfig().getString("mysql.database"), getConfig().getString("mysql.username"), getConfig().getString("mysql.password"));
-			
+			MySQL.connect(
+				getConfig().getString("mysql.host"),
+				getConfig().getInt("mysql.port"),
+				getConfig().getString("mysql.database"),
+				getConfig().getString("mysql.username"),
+				getConfig().getString("mysql.password"));
+				
 			if(MySQL.isConnected()) {
 				try {
 					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))").executeUpdate();
+					Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionSuccess"));
 				} catch (SQLException e) {
 					e.printStackTrace();
 					mysql = !mysql;
@@ -55,7 +60,7 @@ public class Nick extends JavaPlugin {
 			} else {
 				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionFailed"));
 				mysql = !mysql;
-			}
+			}				
 		}
 	}
 
