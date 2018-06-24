@@ -36,7 +36,7 @@ public class Nick extends JavaPlugin {
 		ConfigCreator.loadConfigs();
 		config = new UTFConfig(new File(getDataFolder(), "config.yml"));
 		mysql = getConfig().getBoolean("mysql");
-		
+				
 		registerListener();
 		registerPacketListener();
 		registerCommands();
@@ -47,9 +47,10 @@ public class Nick extends JavaPlugin {
 			
 			if(MySQL.isConnected()) {
 				try {
-					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))");
+					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))").executeUpdate();
 				} catch (SQLException e) {
 					e.printStackTrace();
+					mysql = !mysql;
 				}
 			} else {
 				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionFailed"));
@@ -92,6 +93,7 @@ public class Nick extends JavaPlugin {
 	
 	private void registerPacketListener() {
 		TabDisguiseManager.readCommandTabComplete();
+		JoinDisguiser.addPacketListener();
 	}
 	
 	public String getLanguage(String path) {

@@ -34,24 +34,25 @@ public class NickManager {
 	public static MojangGameProfile steveProfile = new MojangGameProfile("MHF_ALEX");
 	
 	public static List<String> usedNames = new ArrayList<String>();
-	private static List<Player> nickedPlayerCache = new ArrayList<Player>();
 	private static HashMap<String, MojangGameProfile> profileCache = new HashMap<String, MojangGameProfile>();
 	
 	private static Class<?> entityplayerClass = Reflections.getNMSClass("EntityPlayer");
 	private static Class<?> packetplayoutnamedentityspawnClass = Reflections.getNMSClass("PacketPlayOutNamedEntitySpawn");
 	private static Class<?> entityhumanClass = Reflections.getNMSClass("EntityHuman");
+	private static Class<?> craftplayerClass = Reflections.getCraftBukkitClass("entity.CraftPlayer");
 	private static Class<?> craftchatmessageClass = Reflections.getCraftBukkitClass("util.CraftChatMessage");
 	
 	private static Field nameField = Reflections.getField(GameProfile.class, "name");
 	private static Field uuidField = Reflections.getField(GameProfile.class, "id");
+	private static Field healthField = Reflections.getField(craftplayerClass, "health");
 	
 	private static String nickedPrefix = main.getConfig().getString("nickprefix").replace("&", "§");
 	
 	public static String getRandomNick() {
 		List<String> list = ConfigManager.getNicks().getStringList("nicks");
-		String name = list.isEmpty() ? null : list.get((int)(Math.random() * list.size() -1));
+		String name = list.isEmpty() ? null : list.get((int)(Math.random() * (list.size() -1)));
 		if(name != null) {
-			while(usedNames.contains(name))name = list.get((int)(Math.random() * list.size() -1));
+			while(usedNames.contains(name))name = list.get((int)(Math.random() * (list.size() -1)));
 			return name;
 		} else throw new NullPointerException("Nicklist cannot be null");
 	}
@@ -67,7 +68,6 @@ public class NickManager {
 	}
 	
 	private static void sendPackets(Player player, String nick, MojangGameProfile profile, boolean disguise, Player[] sendedPlayers, String prefix) {
-		if(!disguise)nickedPlayerCache.add(player);
 		int level = player.getLevel();
 		double health = player.getHealth();
 		Location loc = player.getLocation();
@@ -98,12 +98,12 @@ public class NickManager {
 			
 			for(Player pl : sendedPlayers) {
 				manager.sendServerPacket(pl, removeProfile);
-				if(!pl.getName().equalsIgnoreCase(player.getName())) {
-					manager.sendServerPacket(pl, despawn);
-				}
+				manager.sendServerPacket(pl, despawn);
 			}
 			
-			if(!disguise)player.setHealth(0);
+			if(!disguise) {
+				Reflections.setField(healthField, entityplayerClass.getMethod("getBukkitEntity").invoke(ep), 0);
+			}
 			Bukkit.getScheduler().runTaskLater(main, new Runnable() {
 				
 				@Override
@@ -128,10 +128,10 @@ public class NickManager {
 										for(Player pl : sendedPlayers) {
 											if(!pl.getName().equalsIgnoreCase(player.getName()))manager.sendServerPacket(pl, PacketContainer.fromPacket(spawn));
 										}
-										nickedPlayerCache.remove(player);
 										player.setDisplayName(prefix + nick);
 										player.setPlayerListName(prefix + nick);
 										player.setCustomName(nick);
+										manager.updateEntity(player, manager.getEntityTrackers(player));
 									} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 											| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
 										e1.printStackTrace();
@@ -157,9 +157,5 @@ public class NickManager {
 	public static void cache(MojangGameProfile profile) {
 		if(profileCache.containsKey(profile.getName().toLowerCase())) profileCache.replace(profile.getName().toLowerCase(), profile);
 		else profileCache.put(profile.getName().toLowerCase(), profile);
-	}
-	
-	public static boolean isInProgress(Player player) {
-		return nickedPlayerCache.contains(player);
 	}
 }

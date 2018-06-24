@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -17,16 +16,6 @@ import de.timeout.nick.Nick;
 public class DisguiseManager implements Listener {
 
 	private static Nick main = Nick.plugin;
-	
-	@EventHandler
-	public void onDeath(PlayerDeathEvent event) {
-		Player p = event.getEntity();
-		if(NickManager.isInProgress(p)) {
-			event.setDeathMessage(null);
-			event.setKeepInventory(true);
-			event.setKeepLevel(true);
-		}
-	}
 	
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {

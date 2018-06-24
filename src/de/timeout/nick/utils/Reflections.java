@@ -37,6 +37,16 @@ public class Reflections {
 		return null;
 	}
 	
+	public static Object getValue(Field field, Object obj) {
+		try {
+			field.setAccessible(true);
+			return field.get(obj);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static Class<?> getSubClass(Class<?> overclass, String classname) {
 		Class<?>[] underclasses = overclass.getClasses();
 		for(Class<?> underclass : underclasses) {
