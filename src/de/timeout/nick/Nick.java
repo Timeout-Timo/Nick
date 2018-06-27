@@ -35,7 +35,7 @@ public class Nick extends JavaPlugin {
 		plugin = this;
 		ConfigCreator.loadConfigs();
 		config = new UTFConfig(new File(getDataFolder(), "config.yml"));
-		mysql = getConfig().getBoolean("mysql");
+		mysql = getConfig().getBoolean("sqlEnabled");
 				
 		registerListener();
 		registerPacketListener();
@@ -48,6 +48,7 @@ public class Nick extends JavaPlugin {
 			if(MySQL.isConnected()) {
 				try {
 					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))").executeUpdate();
+					Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionSuccess"));
 				} catch (SQLException e) {
 					e.printStackTrace();
 					mysql = !mysql;

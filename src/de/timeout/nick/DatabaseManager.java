@@ -5,9 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+
+import org.bukkit.Bukkit;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
@@ -44,6 +46,7 @@ public class DatabaseManager {
 			list.forEach(uuid -> {
 				JsonObject obj = new JsonObject();
 				obj.addProperty("uuid", uuid.toString());
+				obj.addProperty("nickname", main.getNickname(Bukkit.getServer().getPlayer(uuid)));
 				array.add(obj);
 			});
 				
@@ -57,14 +60,14 @@ public class DatabaseManager {
 		}
 	}
 	
-	public static List<UUID> getNickedList() {
-		List<UUID> list = new ArrayList<UUID>();
+	public static HashMap<UUID, String> getNickedList() {
+		HashMap<UUID, String> map = new HashMap<UUID, String>();
 		try {
 			JsonArray array = new JsonParser().parse(new FileReader(getNickedPlayerFile())).getAsJsonArray();
-			for(int i = 0; i < array.size(); i++) list.add(UUID.fromString(array.get(i).getAsJsonObject().get("uuid").getAsString()));
+			for(int i = 0; i < array.size(); i++) map.put(UUID.fromString(array.get(i).getAsJsonObject().get("uuid").getAsString()), array.get(i).getAsJsonObject().get("nickname").getAsString());
 		} catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		return list;
+		return map;
 	}
 }

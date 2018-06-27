@@ -34,7 +34,7 @@ public class DisguiseManager implements Listener {
 	public void onQuit(PlayerQuitEvent event) {
 		Player p = event.getPlayer();
 		if(main.isNicked(p)) {
-			NickManager.usedNames.remove(main.getNickname(p));
+			event.setQuitMessage(event.getQuitMessage().replaceAll(p.getName(), main.getNickname(p)));
 			main.removeNick(p);
 		}
 	}

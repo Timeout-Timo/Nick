@@ -51,11 +51,11 @@ public class JoinDisguiser implements Listener {
 	@EventHandler
 	public void registerPlayer(AsyncPlayerPreLoginEvent event) {
 		if(!main.sqlEnabled()) {
-			List<UUID> list = DatabaseManager.getNickedList();
-			if(list.contains(event.getUniqueId())) {
-				nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
+			HashMap<UUID, String> list = DatabaseManager.getNickedList();
+			if(list.keySet().contains(event.getUniqueId())) {
+				nickCache.put(event.getUniqueId(), list.get(event.getUniqueId()));
 			}
-		} else if(SQLManager.isInDatabase(event.getUniqueId()))nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
+		} else if(SQLManager.isInDatabase(event.getUniqueId()))nickCache.put(event.getUniqueId(), SQLManager.getNickname(event.getUniqueId()));
 	}
 	
 	@EventHandler

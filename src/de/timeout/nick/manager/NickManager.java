@@ -50,9 +50,12 @@ public class NickManager {
 	
 	public static String getRandomNick() {
 		List<String> list = ConfigManager.getNicks().getStringList("nicks");
-		String name = list.isEmpty() ? null : list.get((int)(Math.random() * (list.size() -1)));
-		if(name != null) {
-			while(usedNames.contains(name))name = list.get((int)(Math.random() * (list.size() -1)));
+		if(!list.isEmpty()) {
+			String name;
+			do {
+				name = list.get((int)(Math.random() * (list.size() -1)));
+			} while(usedNames.contains(name));
+			
 			return name;
 		} else throw new NullPointerException("Nicklist cannot be null");
 	}
