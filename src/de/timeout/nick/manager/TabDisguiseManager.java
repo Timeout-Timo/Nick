@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -89,8 +90,8 @@ public class TabDisguiseManager implements Listener {
 						for(int i = 0; i < list.size(); i++)newmsg[i] = list.get(i);
 						packet.getSpecificModifier(String[].class).write(0, newmsg);
 					} catch (FieldAccessException e) {
-						e.printStackTrace();
-					} catch (NullPointerException e) {}
+						Bukkit.getLogger().log(Level.SEVERE, "Could not access Field", e);
+					}
 				}
 			}
 			

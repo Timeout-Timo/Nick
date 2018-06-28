@@ -42,7 +42,7 @@ public class NickCommand implements CommandExecutor {
 							Bukkit.getServer().getPluginManager().callEvent(event);
 							if(!event.isCancelled()) {
 								main.addNick(p, event.getNick().length() < 17 ? event.getNick() : NickManager.getRandomNick());
-								NickManager.usedNames.add(event.getNick().toLowerCase());
+								NickManager.getUsedNames().add(event.getNick().toLowerCase());
 								NickManager.sendNickPackets(event.getPlayer(), event.getNick(), false, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));			
 								if(!main.sqlEnabled())DatabaseManager.cacheNicked();
 								else SQLManager.cacheNicked(event.getPlayer().getUniqueId(), event.getNick());

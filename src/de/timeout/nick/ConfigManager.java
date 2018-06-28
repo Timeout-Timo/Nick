@@ -2,6 +2,7 @@ package de.timeout.nick;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
 
 import de.timeout.nick.utils.UTFConfig;
 
@@ -14,6 +15,8 @@ public class ConfigManager {
 	
 	private static File nameFile = null;
 	private static UTFConfig nameCfg = null;
+	
+	private ConfigManager() {}
 	
 	public static void loadLanguage() {
 		if(langFile == null)
@@ -31,7 +34,7 @@ public class ConfigManager {
 		try {
 			langCfg.save(langFile);
 		} catch (IOException e) {
-			e.printStackTrace();
+			main.getLogger().log(Level.WARNING, "Could not save Languagefile", e);
 		}
 	}
 	
@@ -49,7 +52,7 @@ public class ConfigManager {
 		try {
 			nameCfg.save(nameFile);
 		} catch (IOException e) {
-			e.printStackTrace();
+			main.getLogger().log(Level.WARNING, "Could not save Nicklist File", e);
 		}
 	}
 }

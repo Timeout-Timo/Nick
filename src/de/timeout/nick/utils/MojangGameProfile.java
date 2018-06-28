@@ -18,6 +18,8 @@ import com.mojang.authlib.properties.Property;
 import de.timeout.nick.manager.NickManager;
 
 public class MojangGameProfile {
+	
+	private static final String texturesConst = "textures";
 		
 	private String name;
 	private UUID uuid;
@@ -44,7 +46,7 @@ public class MojangGameProfile {
 		this.uuid = player.getUniqueId();
 		
 		GameProfile profile = Reflections.getGameProfile(player);
-		Property prop = profile.getProperties().get("textures").iterator().next();
+		Property prop = profile.getProperties().get(texturesConst).iterator().next();
 
 		value = prop.getValue();
 		signature = prop.getSignature();
@@ -82,28 +84,25 @@ public class MojangGameProfile {
 	}
 	
 	private String[] getProperties() {
-		try {
-			InputStreamReader reader = new InputStreamReader(new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + trimmedID + "?unsigned=false").openStream());
+		String propValue = null;
+		String propSignature = null;
+		try(InputStreamReader reader = new InputStreamReader(new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + trimmedID + "?unsigned=false").openStream())) {
 			JsonObject obj = new JsonParser().parse(reader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
 			
-			String value = obj.get("value").getAsString();
-			String signature = obj.get("signature").getAsString();
+			propValue = obj.get("value").getAsString();
+			propSignature = obj.get("signature").getAsString();
 			
-			return new String[] {value, signature};
 		} catch (IOException | IllegalStateException e) {
 			if(NickManager.steveProfile.getValue() == null) {
-				try {
-					InputStreamReader reader = new InputStreamReader(new URL("https://sessionserver.mojang.com/session/minecraft/profile/6ab4317889fd490597f60f67d9d76fd9?unsigned=false").openStream());
+				try (InputStreamReader reader = new InputStreamReader(new URL("https://sessionserver.mojang.com/session/minecraft/profile/6ab4317889fd490597f60f67d9d76fd9?unsigned=false").openStream())) {
 					JsonObject obj = new JsonParser().parse(reader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
 					
-					String value = obj.get("value").getAsString();
-					String signature = obj.get("signature").getAsString();
-					
-					return new String[] {value, signature};
+					propValue = obj.get("value").getAsString();
+					propSignature = obj.get("signature").getAsString();
 				} catch (IOException | IllegalStateException e1) {}
 			} else return new String[] {NickManager.steveProfile.getValue(), NickManager.steveProfile.getSignature()};
 		}
-		return new String[2];
+		return new String[] {propValue, propSignature};
 	}
 	
 	private static UUID fromTrimmed(String trimmedUUID) {
@@ -123,7 +122,7 @@ public class MojangGameProfile {
 	public GameProfile getProfile() {
 		GameProfile profile = new GameProfile(uuid, name);
 		if(value != null && signature != null)
-			profile.getProperties().put("textures", new Property("textures", value, signature));
+			profile.getProperties().put(texturesConst, new Property(texturesConst, value, signature));
 		
 		return profile;
 	}

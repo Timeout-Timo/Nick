@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -14,6 +15,8 @@ import com.google.common.io.ByteStreams;
 public class ConfigCreator {
 
 	private static Nick main = Nick.plugin;
+	
+	private ConfigCreator() {}
 	
 	public static void loadConfigs() {
 		loadResource(main, "config.yml");
@@ -42,7 +45,7 @@ public class ConfigCreator {
 			}
 			Bukkit.getConsoleSender().sendMessage("§8[§aOut-Configuration§8] §a" + f.getName() + "§f is §asucessful loaded");
 		} catch (IOException e) {
-			e.printStackTrace();
+			Bukkit.getLogger().log(Level.SEVERE, "Fatal Error by creating File " + filepath, e);
 		}
 	}
 }

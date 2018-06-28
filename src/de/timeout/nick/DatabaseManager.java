@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 
@@ -22,13 +23,15 @@ public class DatabaseManager {
 	private static Nick main = Nick.plugin;
 	
 	private static File nickedplayersFile = null;
+	
+	private DatabaseManager() {}
 
 	public static void loadNicked() {
 		try {
 			if(nickedplayersFile == null)nickedplayersFile = new File(main.getDataFolder().getPath() + "/database", "nickedPlayers.json");
 			if(!nickedplayersFile.exists())nickedplayersFile.createNewFile();
 		} catch (IOException e) {
-			e.printStackTrace();
+			main.getLogger().log(Level.WARNING, "Could not load nickedPlayers.json", e);
 		}
 	}
 	
@@ -55,7 +58,7 @@ public class DatabaseManager {
 				writer.write(array.toString());
 				writer.close();
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				main.getLogger().log(Level.SEVERE, "Could not find nickedPlayers.json", e);
 			}
 		}
 	}
@@ -66,7 +69,7 @@ public class DatabaseManager {
 			JsonArray array = new JsonParser().parse(new FileReader(getNickedPlayerFile())).getAsJsonArray();
 			for(int i = 0; i < array.size(); i++) map.put(UUID.fromString(array.get(i).getAsJsonObject().get("uuid").getAsString()), array.get(i).getAsJsonObject().get("nickname").getAsString());
 		} catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
-			e.printStackTrace();
+			main.getLogger().log(Level.SEVERE, "Could not read JSON File", e);
 		}
 		return map;
 	}

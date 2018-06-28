@@ -1,11 +1,13 @@
 package de.timeout.nick;
 
 import java.io.File;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,6 +24,8 @@ import de.timeout.nick.utils.SQLManager;
 import de.timeout.nick.utils.UTFConfig;
 
 public class Nick extends JavaPlugin {
+	
+	private static final String preficConst = "prefix";
 	
 	public static Nick plugin;
 
@@ -46,15 +50,15 @@ public class Nick extends JavaPlugin {
 				getConfig().getString("mysql.database"), getConfig().getString("mysql.username"), getConfig().getString("mysql.password"));
 			
 			if(MySQL.isConnected()) {
-				try {
-					MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))").executeUpdate();
-					Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionSuccess"));
+				try(PreparedStatement ps = MySQL.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Nicks(UUID VARCHAR(100), Nick VARCHAR(20))")) {
+					ps.executeUpdate();
+					Bukkit.getServer().getConsoleSender().sendMessage(getLanguage(preficConst) + getLanguage("mysql.connectionSuccess"));
 				} catch (SQLException e) {
-					e.printStackTrace();
+					getLogger().log(Level.WARNING, "Error while creating Databases", e);
 					mysql = !mysql;
 				}
 			} else {
-				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.connectionFailed"));
+				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage(preficConst) + getLanguage("mysql.connectionFailed"));
 				mysql = !mysql;
 			}
 		}
@@ -64,12 +68,10 @@ public class Nick extends JavaPlugin {
 	public void onDisable() {
 		if(sqlEnabled()) {
 			try {
-				disguisedPlayers.keySet().forEach(p -> {
-					SQLManager.cacheNicked(p.getUniqueId(), disguisedPlayers.get(p));
-				});
+				disguisedPlayers.keySet().forEach(p -> SQLManager.cacheNicked(p.getUniqueId(), disguisedPlayers.get(p)));
 			} finally {
 				MySQL.disconnect();
-				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage("prefix") + getLanguage("mysql.disconnect"));
+				Bukkit.getServer().getConsoleSender().sendMessage(getLanguage(preficConst) + getLanguage("mysql.disconnect"));
 			}
 		}
 
@@ -120,18 +122,14 @@ public class Nick extends JavaPlugin {
 	
 	public Player getNickedPlayer(String nick) {
 		for(Player p : Bukkit.getServer().getOnlinePlayers()) {
-			if(isNicked(p)) {
-				if(getNickname(p).equalsIgnoreCase(nick))return p;
-			}
+			if(isNicked(p) && getNickname(p).equalsIgnoreCase(nick)) return p;
 		}
 		return null;
 	}
 	
 	public List<UUID> getNickedPlayers() {
 		List<UUID> list = new ArrayList<UUID>();
-		disguisedPlayers.keySet().forEach(p -> {
-			list.add(p.getUniqueId());
-		});
+		disguisedPlayers.keySet().forEach(p -> list.add(p.getUniqueId()));
 		return list;
 	}
 	

@@ -45,7 +45,7 @@ public class DisguiseManager implements Listener {
 		String[] split = event.getMessage().substring(1).split(" ");
 		for(int i = 0 ; i < split.length; i++) {
 			String s = split[i];
-			if(NickManager.usedNames.contains(s.toLowerCase())) {
+			if(NickManager.getUsedNames().contains(s.toLowerCase())) {
 				Player name = main.getNickedPlayer(s);
 				split[i] = name.getName();
 			} else if(Bukkit.getServer().getOfflinePlayer(s).isOnline()) {
