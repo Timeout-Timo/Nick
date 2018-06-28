@@ -35,12 +35,12 @@ public class Nick extends JavaPlugin {
 		plugin = this;
 		ConfigCreator.loadConfigs();
 		config = new UTFConfig(new File(getDataFolder(), "config.yml"));
-		mysql = getConfig().getBoolean("sqlEnabled");
 				
 		registerListener();
 		registerPacketListener();
 		registerCommands();
 		
+		mysql = getConfig().getBoolean("sqlEnabled");
 		if(mysql) {
 			MySQL.connect(getConfig().getString("mysql.host"), getConfig().getInt("mysql.port"),
 				getConfig().getString("mysql.database"), getConfig().getString("mysql.username"), getConfig().getString("mysql.password"));

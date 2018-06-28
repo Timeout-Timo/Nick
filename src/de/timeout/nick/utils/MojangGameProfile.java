@@ -28,14 +28,16 @@ public class MojangGameProfile {
 	@SuppressWarnings("deprecation")
 	public MojangGameProfile(String name) {
 		this.name = name;
-		if(!Bukkit.getServer().getOfflinePlayer(name).isOnline()) {
-			this.trimmedID = getTrimmedUUID();
-			this.uuid = fromTrimmed(trimmedID);
-			
-			String[] props = getProperties();
-			this.value = props[0];
-			this.signature = props[1];
-		} else getGameProfile(Bukkit.getServer().getPlayer(name));
+		try {
+			if(!Bukkit.getServer().getOfflinePlayer(name).isOnline()) {
+				this.trimmedID = getTrimmedUUID();
+				this.uuid = fromTrimmed(trimmedID);
+				
+				String[] props = getProperties();
+				this.value = props[0];
+				this.signature = props[1];
+			} else getGameProfile(Bukkit.getServer().getPlayer(name));
+		} catch(IllegalArgumentException e) {}
 	}
 	
 	public MojangGameProfile(Player player) {
