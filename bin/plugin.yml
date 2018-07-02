@@ -1,5 +1,5 @@
 name: Nick
-version: 0.6
+version: 0.9-DEV
 depends: [ProtocolLib]
 author: Timeout
 description: A simple NickPlugin

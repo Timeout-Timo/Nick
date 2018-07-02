@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -28,6 +27,7 @@ import de.timeout.nick.ConfigManager;
 import de.timeout.nick.Nick;
 import de.timeout.nick.utils.MojangGameProfile;
 import de.timeout.nick.utils.Reflections;
+import net.md_5.bungee.api.ChatColor;
 
 public class NickManager {
 	
@@ -36,7 +36,6 @@ public class NickManager {
 	public static MojangGameProfile steveProfile = new MojangGameProfile("MHF_ALEX");
 	
 	private static List<String> usedNames = new ArrayList<String>();
-	private static HashMap<String, MojangGameProfile> profileCache = new HashMap<String, MojangGameProfile>();
 	
 	private static Class<?> entityplayerClass = Reflections.getNMSClass("EntityPlayer");
 	private static Class<?> packetplayoutnamedentityspawnClass = Reflections.getNMSClass("PacketPlayOutNamedEntitySpawn");
@@ -48,7 +47,7 @@ public class NickManager {
 	private static Field uuidField = Reflections.getField(GameProfile.class, "id");
 	private static Field healthField = Reflections.getField(craftplayerClass, "health");
 	
-	private static String nickedPrefix = main.getConfig().getString("nickprefix").replace("&", "§");
+	private static String nickedPrefix = ChatColor.translateAlternateColorCodes('&', main.getConfig().getString("nickprefix"));
 	
 	private NickManager() {}
 	
@@ -65,12 +64,13 @@ public class NickManager {
 	}
 	
 	public static void sendNickPackets(Player player, String nick, boolean disguise, Player... sendedPlayers) {
-		MojangGameProfile profile = profileCache.containsKey(nick) ? profileCache.get(nick) : new MojangGameProfile(nick);
-		sendPackets(player, nick, profile, disguise, sendedPlayers, nickedPrefix);
+		MojangGameProfile profile = new MojangGameProfile(nick);
+		if(profile.getName() != null && profile.getTrimmedID() != null) 
+			sendPackets(player, nick, profile, disguise, sendedPlayers, nickedPrefix);
 	}
 	
 	public static void sendUnnickPackets(Player player, Player... sendedPlayers) {
-		MojangGameProfile profile = profileCache.containsKey(player.getName().toLowerCase()) ? profileCache.get(player.getName().toLowerCase()) : new MojangGameProfile(player);
+		MojangGameProfile profile = new MojangGameProfile(player);
 		sendPackets(player, player.getName(), profile, false, sendedPlayers, "");
 	}
 	
@@ -80,9 +80,7 @@ public class NickManager {
 		Location loc = player.getLocation();
 		float xp = player.getExp();
 		
-		try {
-			cache(profile);
-			
+		try {			
 			GameProfile prof = profile.getProfile();
 			Reflections.setField(nameField, prof, nick);
 			Reflections.setField(uuidField, prof, player.getUniqueId());
@@ -121,15 +119,14 @@ public class NickManager {
 					
 					try {
 						for(Player pl : sendedPlayers)manager.sendServerPacket(pl, addProfile);
-						Bukkit.getServer().getScheduler().runTaskLater(main, () -> {
-								
+						Bukkit.getServer().getScheduler().runTaskLater(main, () -> {	
 							try {
 								Object spawn = packetplayoutnamedentityspawnClass.getConstructor(entityhumanClass).newInstance(ep);
 								for(Player pla : sendedPlayers)
 									if(!pla.getName().equalsIgnoreCase(player.getName()))manager.sendServerPacket(pla, PacketContainer.fromPacket(spawn));
+								player.setCustomName(nick);
 								player.setDisplayName(prefix + nick);
 								player.setPlayerListName(prefix + nick);
-								player.setCustomName(nick);
 								manager.updateEntity(player, manager.getEntityTrackers(player));
 								} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 										| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
@@ -149,11 +146,6 @@ public class NickManager {
 	private static void setInfo(PacketContainer packet, PlayerInfoAction action, PlayerInfoData... data) {
 		packet.getPlayerInfoAction().write(0, action);
 		packet.getPlayerInfoDataLists().write(0, Arrays.asList(data));
-	}
-	
-	public static void cache(MojangGameProfile profile) {
-		if(profileCache.containsKey(profile.getName().toLowerCase())) profileCache.replace(profile.getName().toLowerCase(), profile);
-		else profileCache.put(profile.getName().toLowerCase(), profile);
 	}
 
 	public static List<String> getUsedNames() {

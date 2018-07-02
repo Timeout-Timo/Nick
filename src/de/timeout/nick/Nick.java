@@ -22,6 +22,7 @@ import de.timeout.nick.manager.TabDisguiseManager;
 import de.timeout.nick.utils.MySQL;
 import de.timeout.nick.utils.SQLManager;
 import de.timeout.nick.utils.UTFConfig;
+import net.md_5.bungee.api.ChatColor;
 
 public class Nick extends JavaPlugin {
 	
@@ -100,7 +101,7 @@ public class Nick extends JavaPlugin {
 	}
 	
 	public String getLanguage(String path) {
-		return ConfigManager.getLanguageConfig().getString(path).replaceAll("&", "§");
+		return ChatColor.translateAlternateColorCodes('&', ConfigManager.getLanguageConfig().getString(path));
 	}
 	
 	public boolean sqlEnabled() {

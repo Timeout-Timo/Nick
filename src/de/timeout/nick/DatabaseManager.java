@@ -70,7 +70,7 @@ public class DatabaseManager {
 			for(int i = 0; i < array.size(); i++) map.put(UUID.fromString(array.get(i).getAsJsonObject().get("uuid").getAsString()), array.get(i).getAsJsonObject().get("nickname").getAsString());
 		} catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
 			main.getLogger().log(Level.SEVERE, "Could not read JSON File", e);
-		}
+		} catch(IllegalStateException e) {}
 		return map;
 	}
 }

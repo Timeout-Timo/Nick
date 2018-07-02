@@ -2,9 +2,11 @@ package de.timeout.nick.manager;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -27,31 +29,41 @@ public class TabDisguiseManager implements Listener {
 	
 	private static Nick main = Nick.plugin;
 	
+	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void onTabComplete(PlayerChatTabCompleteEvent event) {
-		List<String> completitions = (List<String>)event.getTabCompletions();
+		List<String> list = (List<String>)event.getTabCompletions();
 		String[] split = event.getChatMessage().split(" ");
 		try {
-			String suggest = split[split.length -1];
-			for(int i = 0; i < completitions.size(); i++) {
-				Player p = Bukkit.getServer().getPlayer(completitions.get(i));
-				if(main.isNicked(p)) {
-					String nicked = main.getNickname(p);
-					completitions.set(i, nicked);
-				}	
-			}
-			for(int i = 0; i < completitions.size(); i++) {
-				String name = completitions.get(i);
-				if(name.toLowerCase().startsWith(suggest.toLowerCase())) {
-					String first = completitions.get(0);
-					completitions.set(0, name);
-					completitions.set(i, first);
+			
+			Bukkit.getServer().getOnlinePlayers().forEach(p -> list.add(p.getCustomName() != null ? p.getCustomName() : p.getName()));
+			
+			for(int i = 0; i < list.size(); i++) {
+				if(!(Bukkit.getServer().getOfflinePlayer(list.get(i)).isOnline() || NickManager.getUsedNames().contains(list.get(i).toLowerCase())))  {
+					Bukkit.getServer().getOnlinePlayers().forEach(p -> list.remove(p.getCustomName() != null ? p.getCustomName() : p.getName()));
+					break;
+				} else if(Bukkit.getServer().getOfflinePlayer(list.get(i)).isOnline()) {
+					Player p = Bukkit.getServer().getPlayer(list.get(i));
+					if(main.isNicked(p))list.remove(i);
 				}
 			}
-		} catch(ArrayIndexOutOfBoundsException e) {
+			
+			//Richtig nach Vorschlag sortieren
+			for(int i = 0; i < list.size(); i++) {
+				String suggest = list.get(i);
+				if(suggest.toLowerCase().startsWith(split[split.length -1 != -1 ? split.length -1 : 0])) {
+					list.set(i, list.get(0));
+					list.set(0, suggest);
+				}
+			}
+			
+			//Compilen in String[]
+			String[] newmsg = new String[list.size()];
+			for(int i = 0; i < list.size(); i++)newmsg[i] = list.get(i);
+
 		} finally {
 			Field field = Reflections.getField(PlayerChatTabCompleteEvent.class, "completions");
-			Reflections.setField(field, event, completitions);
+			Reflections.setField(field, event, list);
 		}
 	}
 
@@ -60,6 +72,7 @@ public class TabDisguiseManager implements Listener {
 			
 			private HashMap<Player, String> cache = new HashMap<Player, String>();
 			
+			@SuppressWarnings("deprecation")
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				Player receiver = event.getPlayer();
@@ -67,25 +80,34 @@ public class TabDisguiseManager implements Listener {
 					try {
 						PacketContainer packet = event.getPacket();
 						String[] message = packet.getSpecificModifier(String[].class).read(0);
-						List<String> list = new ArrayList<String>();
+						ArrayList<String> list = Arrays.stream(message).collect(Collectors.toCollection(ArrayList :: new));
 						
-						for(int i = 0; i < message.length; i++) {
-							Player p = Bukkit.getServer().getPlayer(message[i]);
-							if(receiver.canSee(p)) {
-								if(main.isNicked(p))list.add(main.getNickname(p));
-								else list.add(p.getName());
-							}
-						}
+						Bukkit.getServer().getOnlinePlayers().forEach(p -> list.add(p.getCustomName() != null ? p.getCustomName() : p.getName()));
 						
 						for(int i = 0; i < list.size(); i++) {
-							String suggest = list.get(i);
-							if(suggest.startsWith(cache.get(receiver))) {
-								String first = list.get(0);
-								list.set(0, list.get(i));
-								list.set(i, first);
+							if(!(Bukkit.getServer().getOfflinePlayer(list.get(i)).isOnline() || NickManager.getUsedNames().contains(list.get(i).toLowerCase())))  {
+								Bukkit.getServer().getOnlinePlayers().forEach(p -> list.remove(p.getCustomName() != null ? p.getCustomName() : p.getName()));
+								break;
+							} else if(Bukkit.getServer().getOfflinePlayer(list.get(i)).isOnline()) {
+								Player p = Bukkit.getServer().getPlayer(list.get(i));
+								if(main.isNicked(p))list.remove(i);
 							}
 						}
 						
+						//Richtig nach Vorschlag sortieren
+						if(cache.get(receiver) != null) {
+							for(int i = 0; i < list.size(); i++) {
+								String suggest = list.get(i);
+								if(suggest != null) {
+									if(suggest.toLowerCase().startsWith(cache.get(receiver))) {
+										list.set(i, list.get(0));
+										list.set(0, suggest);
+									}
+								} else list.remove(i);
+							}
+						}
+						
+						//Compilen in String[]
 						String[] newmsg = new String[list.size()];
 						for(int i = 0; i < list.size(); i++)newmsg[i] = list.get(i);
 						packet.getSpecificModifier(String[].class).write(0, newmsg);
@@ -99,13 +121,11 @@ public class TabDisguiseManager implements Listener {
 			public void onPacketReceiving(PacketEvent event) {
 				Player sender = event.getPlayer();
 				if(event.getPacketType() == PacketType.Play.Client.TAB_COMPLETE) {
-					try {
-						PacketContainer packet = event.getPacket();
-						String cmd = packet.getSpecificModifier(String.class).read(0);
-						String[] args = cmd.split(" ");
+					PacketContainer packet = event.getPacket();
+					String cmd = packet.getSpecificModifier(String.class).read(0);
+					String[] args = cmd.split(" ");
 						
-						cache.put(sender, args[args.length -1]);
-					} catch(ArrayIndexOutOfBoundsException e) {}
+					cache.put(sender, args[args.length -1 > 0 ? args.length -1 : 0]);
 				}
 			}
 		});

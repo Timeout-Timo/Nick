@@ -30,14 +30,16 @@ public class MojangGameProfile {
 	@SuppressWarnings("deprecation")
 	public MojangGameProfile(String name) {
 		this.name = name;
-		if(!Bukkit.getServer().getOfflinePlayer(name).isOnline()) {
-			this.trimmedID = getTrimmedUUID();
-			this.uuid = fromTrimmed(trimmedID);
-			
-			String[] props = getProperties();
-			this.value = props[0];
-			this.signature = props[1];
-		} else getGameProfile(Bukkit.getServer().getPlayer(name));
+		if(name != null) {
+			if(!Bukkit.getServer().getOfflinePlayer(name).isOnline()) {
+				this.trimmedID = getTrimmedUUID();
+				this.uuid = fromTrimmed(trimmedID);
+				
+				String[] props = getProperties();
+				this.value = props[0];
+				this.signature = props[1];
+			} else getGameProfile(Bukkit.getServer().getPlayer(name));
+		}
 	}
 	
 	public MojangGameProfile(Player player) {
@@ -68,8 +70,7 @@ public class MojangGameProfile {
 	
 	private String getTrimmedUUID() {
 		if(!name.equals("MHF_Alex")) {
-			try {
-				InputStreamReader reader = new InputStreamReader(new URL("https://api.mojang.com/users/profiles/minecraft/" + name.toLowerCase()).openStream());
+			try(InputStreamReader reader = new InputStreamReader(new URL("https://api.mojang.com/users/profiles/minecraft/" + name.toLowerCase()).openStream())){
 				JsonObject obj = new JsonParser().parse(reader).getAsJsonObject();
 				if(obj != null) {
 					this.name = obj.get("name").getAsString();
