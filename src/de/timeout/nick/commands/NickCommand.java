@@ -35,13 +35,14 @@ public class NickCommand implements CommandExecutor {
 			if(p.hasPermission("nick.nick")) {
 				if(args.length < 2) {
 					String name = args.length == 1 ? args[0] : NickManager.getRandomNick();
+					if(name.length() >= 17)name = NickManager.getRandomNick();
 					if(!name.equalsIgnoreCase(p.getName())) {
 						if(isValidNickname(name) && !forbiddenNicks.contains(name)) {
 							PlayerNickEvent event = new PlayerNickEvent(p, name);
 							Bukkit.getServer().getPluginManager().callEvent(event);
 							if(!event.isCancelled()) {
-								main.addNick(p, event.getNick());
-								NickManager.usedNames.add(event.getNick().toLowerCase());
+								main.addNick(p, event.getNick().length() < 17 ? event.getNick() : NickManager.getRandomNick());
+								NickManager.getUsedNames().add(event.getNick().toLowerCase());
 								NickManager.sendNickPackets(event.getPlayer(), event.getNick(), false, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));			
 								if(!main.sqlEnabled())DatabaseManager.cacheNicked();
 								else SQLManager.cacheNicked(event.getPlayer().getUniqueId(), event.getNick());

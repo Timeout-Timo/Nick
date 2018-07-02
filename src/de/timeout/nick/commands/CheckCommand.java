@@ -11,6 +11,10 @@ import de.timeout.nick.manager.NickManager;
 
 public class CheckCommand implements CommandExecutor {
 	
+	private static final String nameConst = "[name]";
+	private static final String commandConst = "[command]";
+	private static final String nickConst = "[nick]";
+	
 	private Nick main = Nick.plugin;
 	
 	private String prefix = main.getLanguage("prefix");
@@ -26,14 +30,14 @@ public class CheckCommand implements CommandExecutor {
 		if(sender.hasPermission("nick.check")) {
 			if(args.length == 1) {
 				String name = args[0];
-				if(Bukkit.getServer().getOfflinePlayer(name).isOnline() || NickManager.usedNames.contains(name)) {
+				if(Bukkit.getServer().getOfflinePlayer(name).isOnline() || NickManager.getUsedNames().contains(name)) {
 					Player t = Bukkit.getServer().getPlayer(name);
 					if(main.isNicked(t)) {
 						String nick = main.getNickname(t);
-						sender.sendMessage(prefix + check.replace("[name]", name).replace("[nick]", nick));
-					} else sender.sendMessage(prefix + notNicked.replace("[name]", name));
-				} else sender.sendMessage(prefix + notOnline.replace("[name]", name));
-			} else sender.sendMessage(prefix + falseCommand.replace("[command]", "/check <Nickname>"));
+						sender.sendMessage(prefix + check.replace(nameConst, name).replace(nickConst, nick));
+					} else sender.sendMessage(prefix + notNicked.replace(nameConst, name));
+				} else sender.sendMessage(prefix + notOnline.replace(nameConst, name));
+			} else sender.sendMessage(prefix + falseCommand.replace(commandConst, "/check <Nickname>"));
 		} else sender.sendMessage(prefix + permissions);
 		return false;
 	}

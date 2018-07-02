@@ -29,7 +29,7 @@ public class UnnickCommand implements CommandExecutor {
 				PlayerUnnickEvent event = new PlayerUnnickEvent(p);
 				Bukkit.getServer().getPluginManager().callEvent(event);
 				if(!event.isCancelled()) {
-					NickManager.usedNames.remove(name.toLowerCase());
+					NickManager.getUsedNames().remove(name.toLowerCase());
 					main.removeNick(p);
 					NickManager.sendUnnickPackets(p, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));
 					if(!main.sqlEnabled())DatabaseManager.cacheNicked();

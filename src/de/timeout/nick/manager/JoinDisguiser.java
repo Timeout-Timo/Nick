@@ -1,7 +1,5 @@
 package de.timeout.nick.manager;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -21,15 +19,10 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
-import com.comphenix.protocol.wrappers.WrappedGameProfile;
-import com.mojang.authlib.GameProfile;
 
 import de.timeout.nick.DatabaseManager;
 import de.timeout.nick.Nick;
 import de.timeout.nick.events.PlayerNickEvent;
-import de.timeout.nick.utils.MojangGameProfile;
-import de.timeout.nick.utils.Reflections;
 import de.timeout.nick.utils.SQLManager;
 
 /*	Abläufe beim PlayerLogin.
@@ -41,21 +34,17 @@ import de.timeout.nick.utils.SQLManager;
  */
 public class JoinDisguiser implements Listener {
 	
-	private static Class<?> craftchatmessageClass = Reflections.getCraftBukkitClass("util.CraftChatMessage");
-	
-	private static Field uuidField = Reflections.getField(GameProfile.class, "id");
-	
 	private static Nick main = Nick.plugin;
 	private static HashMap<UUID, String> nickCache = new HashMap<UUID, String>();
 	
 	@EventHandler
 	public void registerPlayer(AsyncPlayerPreLoginEvent event) {
 		if(!main.sqlEnabled()) {
-			List<UUID> list = DatabaseManager.getNickedList();
-			if(list.contains(event.getUniqueId())) {
-				nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
+			HashMap<UUID, String> list = DatabaseManager.getNickedList();
+			if(list.keySet().contains(event.getUniqueId())) {
+				nickCache.put(event.getUniqueId(), list.get(event.getUniqueId()));
 			}
-		} else if(SQLManager.isInDatabase(event.getUniqueId()))nickCache.put(event.getUniqueId(), NickManager.getRandomNick());
+		} else if(SQLManager.isInDatabase(event.getUniqueId()))nickCache.put(event.getUniqueId(), SQLManager.getNickname(event.getUniqueId()));
 	}
 	
 	@EventHandler
@@ -66,7 +55,7 @@ public class JoinDisguiser implements Listener {
 			main.getServer().getPluginManager().callEvent(e);
 			if(!e.isCancelled()) {
 				nickCache.replace(p.getUniqueId(), e.getNick());
-				NickManager.usedNames.add(e.getNick());
+				NickManager.getUsedNames().add(e.getNick());
 				main.addNick(p, e.getNick());
 			} else nickCache.remove(p.getUniqueId());
 		}
@@ -75,13 +64,10 @@ public class JoinDisguiser implements Listener {
 	@EventHandler
 	public void nickNickedPlayer(PlayerJoinEvent event) {
 		Player p = event.getPlayer();
-		Bukkit.getScheduler().runTaskLater(main, new Runnable() {
+		Bukkit.getScheduler().runTaskLater(main, () -> {
 			
-			@Override
-			public void run() {
 				NickManager.sendNickPackets(p, nickCache.get(p.getUniqueId()), false, Bukkit.getOnlinePlayers().toArray(new Player[Bukkit.getOnlinePlayers().size()]));
 				nickCache.remove(p.getUniqueId());
-			}
 		}, 3);
 		if(nickCache.containsKey(p.getUniqueId()))event.setJoinMessage(event.getJoinMessage().replace(p.getName(), nickCache.get(p.getUniqueId())));
 	}
@@ -93,25 +79,11 @@ public class JoinDisguiser implements Listener {
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
 				if(packet.getType() == PacketType.Play.Server.PLAYER_INFO) {
-					try {
-						List<PlayerInfoData> b = packet.getPlayerInfoDataLists().read(0);
-						for(int i = 0; i < b.size(); i++) {
-							try {
-								PlayerInfoData data = b.get(i);
-								UUID id = data.getProfile().getUUID();
-								if(nickCache.containsKey(data.getProfile().getUUID())) {
-									GameProfile profile = new MojangGameProfile(nickCache.get(id)).getProfile();
-									Reflections.setField(uuidField, profile, data.getProfile().getUUID());
-									
-									Object[] craftchatmessage = (Object[]) craftchatmessageClass.getMethod("fromString", String.class).invoke(craftchatmessageClass, profile.getName());
-									b.set(i, new PlayerInfoData(WrappedGameProfile.fromHandle(profile), (int)(Math.random()*50), data.getGameMode(), WrappedChatComponent.fromHandle(craftchatmessage[0])));
-								}
-							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-								e.printStackTrace();
-							}
-						}
-						packet.getPlayerInfoDataLists().write(0, b);
-					} catch(NullPointerException e) {}
+					List<PlayerInfoData> b = packet.getPlayerInfoDataLists().read(0);
+					for(int i = 0; i < b.size(); i++) {
+						PlayerInfoData data = b.get(i);
+						if(nickCache.containsKey(data.getProfile().getUUID()))event.setCancelled(true);
+					}
 				}
 			}
 		});

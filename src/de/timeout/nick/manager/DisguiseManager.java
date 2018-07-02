@@ -34,7 +34,7 @@ public class DisguiseManager implements Listener {
 	public void onQuit(PlayerQuitEvent event) {
 		Player p = event.getPlayer();
 		if(main.isNicked(p)) {
-			NickManager.usedNames.remove(main.getNickname(p));
+			event.setQuitMessage(event.getQuitMessage().replaceAll(p.getName(), main.getNickname(p)));
 			main.removeNick(p);
 		}
 	}
@@ -45,7 +45,7 @@ public class DisguiseManager implements Listener {
 		String[] split = event.getMessage().substring(1).split(" ");
 		for(int i = 0 ; i < split.length; i++) {
 			String s = split[i];
-			if(NickManager.usedNames.contains(s.toLowerCase())) {
+			if(NickManager.getUsedNames().contains(s.toLowerCase())) {
 				Player name = main.getNickedPlayer(s);
 				split[i] = name.getName();
 			} else if(Bukkit.getServer().getOfflinePlayer(s).isOnline()) {

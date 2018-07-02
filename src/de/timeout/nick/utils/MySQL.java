@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
 
 public class MySQL {
 
@@ -14,6 +17,8 @@ public class MySQL {
 	private static String username;
 	private static String password;
 	private static Connection con;
+	
+	private MySQL() {}
 	
 	public static void connect(String host, int port, String database, String username, String password) {
 		MySQL.host = host;
@@ -31,7 +36,7 @@ public class MySQL {
 			try {
 				con.close();
 			} catch (SQLException e) {
-				e.printStackTrace();
+				Bukkit.getLogger().log(Level.WARNING, "Could not disconnect from SQL-Database", e);
 			}
 		}
 	}
@@ -51,21 +56,18 @@ public class MySQL {
 	}
 	
 	public static void update(String qry) {
-		PreparedStatement ps;
-		try {
-			ps = con.prepareStatement(qry);
+		try(PreparedStatement ps = con.prepareStatement(qry)) {
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			Bukkit.getLogger().log(Level.WARNING, "Could not update MySQL-Database", e);
 		}
 	}
 	
 	public static ResultSet getResult(String qry) {
-		try {
-			PreparedStatement ps = con.prepareStatement(qry);
+		try(PreparedStatement ps = con.prepareStatement(qry)) {
 			return ps.executeQuery();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			Bukkit.getLogger().log(Level.WARNING, "Could not get Result for Statement " + qry, e);
 		}
 		return null;
 	}

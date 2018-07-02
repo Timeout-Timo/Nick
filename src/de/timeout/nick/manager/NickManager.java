@@ -4,8 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,6 +27,7 @@ import de.timeout.nick.ConfigManager;
 import de.timeout.nick.Nick;
 import de.timeout.nick.utils.MojangGameProfile;
 import de.timeout.nick.utils.Reflections;
+import net.md_5.bungee.api.ChatColor;
 
 public class NickManager {
 	
@@ -33,8 +35,7 @@ public class NickManager {
 	private static ProtocolManager manager = ProtocolLibrary.getProtocolManager();
 	public static MojangGameProfile steveProfile = new MojangGameProfile("MHF_ALEX");
 	
-	public static List<String> usedNames = new ArrayList<String>();
-	private static HashMap<String, MojangGameProfile> profileCache = new HashMap<String, MojangGameProfile>();
+	private static List<String> usedNames = new ArrayList<String>();
 	
 	private static Class<?> entityplayerClass = Reflections.getNMSClass("EntityPlayer");
 	private static Class<?> packetplayoutnamedentityspawnClass = Reflections.getNMSClass("PacketPlayOutNamedEntitySpawn");
@@ -46,24 +47,30 @@ public class NickManager {
 	private static Field uuidField = Reflections.getField(GameProfile.class, "id");
 	private static Field healthField = Reflections.getField(craftplayerClass, "health");
 	
-	private static String nickedPrefix = main.getConfig().getString("nickprefix").replace("&", "§");
+	private static String nickedPrefix = ChatColor.translateAlternateColorCodes('&', main.getConfig().getString("nickprefix"));
+	
+	private NickManager() {}
 	
 	public static String getRandomNick() {
 		List<String> list = ConfigManager.getNicks().getStringList("nicks");
-		String name = list.isEmpty() ? null : list.get((int)(Math.random() * (list.size() -1)));
-		if(name != null) {
-			while(usedNames.contains(name))name = list.get((int)(Math.random() * (list.size() -1)));
+		if(!list.isEmpty()) {
+			String name;
+			do {
+				name = list.get(new Random().nextInt(list.size() -1));
+			} while(getUsedNames().contains(name));
+			
 			return name;
 		} else throw new NullPointerException("Nicklist cannot be null");
 	}
 	
 	public static void sendNickPackets(Player player, String nick, boolean disguise, Player... sendedPlayers) {
-		MojangGameProfile profile = profileCache.containsKey(nick) ? profileCache.get(nick) : new MojangGameProfile(nick);
-		sendPackets(player, nick, profile, disguise, sendedPlayers, nickedPrefix);
+		MojangGameProfile profile = new MojangGameProfile(nick);
+		if(profile.getName() != null && profile.getTrimmedID() != null) 
+			sendPackets(player, nick, profile, disguise, sendedPlayers, nickedPrefix);
 	}
 	
 	public static void sendUnnickPackets(Player player, Player... sendedPlayers) {
-		MojangGameProfile profile = profileCache.containsKey(player.getName().toLowerCase()) ? profileCache.get(player.getName().toLowerCase()) : new MojangGameProfile(player);
+		MojangGameProfile profile = new MojangGameProfile(player);
 		sendPackets(player, player.getName(), profile, false, sendedPlayers, "");
 	}
 	
@@ -73,9 +80,7 @@ public class NickManager {
 		Location loc = player.getLocation();
 		float xp = player.getExp();
 		
-		try {
-			cache(profile);
-			
+		try {			
 			GameProfile prof = profile.getProfile();
 			Reflections.setField(nameField, prof, nick);
 			Reflections.setField(uuidField, prof, player.getUniqueId());
@@ -92,7 +97,7 @@ public class NickManager {
 			
 			PacketContainer addProfile = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
 			Object[] craftchatmessage = (Object[]) craftchatmessageClass.getMethod("fromString", String.class).invoke(craftchatmessageClass, nick);
-			PlayerInfoData addData = new PlayerInfoData(WrappedGameProfile.fromHandle(prof), (int)(Math.random()*50), NativeGameMode.fromBukkit(player.getGameMode()),
+			PlayerInfoData addData = new PlayerInfoData(WrappedGameProfile.fromHandle(prof), new Random().nextInt(50), NativeGameMode.fromBukkit(player.getGameMode()),
 					WrappedChatComponent.fromHandle(craftchatmessage[0]));
 			setInfo(addProfile, PlayerInfoAction.ADD_PLAYER, addData);
 			
@@ -101,13 +106,9 @@ public class NickManager {
 				manager.sendServerPacket(pl, despawn);
 			}
 			
-			if(!disguise) {
-				Reflections.setField(healthField, entityplayerClass.getMethod("getBukkitEntity").invoke(ep), 0);
-			}
-			Bukkit.getScheduler().runTaskLater(main, new Runnable() {
+			if(!disguise) Reflections.setField(healthField, entityplayerClass.getMethod("getBukkitEntity").invoke(ep), 0);
+			Bukkit.getScheduler().runTaskLater(main, () -> {
 				
-				@Override
-				public void run() {
 					if(!disguise) {
 						player.spigot().respawn();
 						player.setHealth(health);
@@ -116,36 +117,29 @@ public class NickManager {
 						player.teleport(loc);
 					}
 					
-					for(Player pl : sendedPlayers)
-						try {
-							manager.sendServerPacket(pl, addProfile);
-							Bukkit.getServer().getScheduler().runTaskLater(main, new Runnable() {
-								
-								@Override
-								public void run() {
-									try {
-										Object spawn = packetplayoutnamedentityspawnClass.getConstructor(entityhumanClass).newInstance(ep);
-										for(Player pl : sendedPlayers) {
-											if(!pl.getName().equalsIgnoreCase(player.getName()))manager.sendServerPacket(pl, PacketContainer.fromPacket(spawn));
-										}
-										player.setDisplayName(prefix + nick);
-										player.setPlayerListName(prefix + nick);
-										player.setCustomName(nick);
-										manager.updateEntity(player, manager.getEntityTrackers(player));
-									} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-											| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
-										e1.printStackTrace();
-									}
+					try {
+						for(Player pl : sendedPlayers)manager.sendServerPacket(pl, addProfile);
+						Bukkit.getServer().getScheduler().runTaskLater(main, () -> {	
+							try {
+								Object spawn = packetplayoutnamedentityspawnClass.getConstructor(entityhumanClass).newInstance(ep);
+								for(Player pla : sendedPlayers)
+									if(!pla.getName().equalsIgnoreCase(player.getName()))manager.sendServerPacket(pla, PacketContainer.fromPacket(spawn));
+								player.setCustomName(nick);
+								player.setDisplayName(prefix + nick);
+								player.setPlayerListName(prefix + nick);
+								manager.updateEntity(player, manager.getEntityTrackers(player));
+								} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+										| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
+									main.getLogger().log(Level.SEVERE, "Could not create and send PacketPlayOutNamedEntitySpawn", e1);
 								}
-							}, 2);
-						} catch (InvocationTargetException e2) {
-							e2.printStackTrace();
-						}
-				}
+						}, 2);
+					} catch (InvocationTargetException e2) {
+						main.getLogger().log(Level.SEVERE, "Could not send PacketPlayOutPlayerInfo", e2);
+					}
 			}, 2);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 				| SecurityException  e) {
-			e.printStackTrace();
+			main.getLogger().log(Level.SEVERE, "Fatal error while nick Player " + player.getName() + " in " + nick, e);
 		}
 	}
 	
@@ -153,9 +147,12 @@ public class NickManager {
 		packet.getPlayerInfoAction().write(0, action);
 		packet.getPlayerInfoDataLists().write(0, Arrays.asList(data));
 	}
-	
-	public static void cache(MojangGameProfile profile) {
-		if(profileCache.containsKey(profile.getName().toLowerCase())) profileCache.replace(profile.getName().toLowerCase(), profile);
-		else profileCache.put(profile.getName().toLowerCase(), profile);
+
+	public static List<String> getUsedNames() {
+		return usedNames;
+	}
+
+	public static void setUsedNames(List<String> usedNames) {
+		NickManager.usedNames = usedNames;
 	}
 }

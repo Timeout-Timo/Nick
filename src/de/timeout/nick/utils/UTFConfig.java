@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -30,7 +31,7 @@ public class UTFConfig extends YamlConfiguration {
 		try {
 			load(file);
 		} catch (IOException | InvalidConfigurationException e) {
-			e.printStackTrace();
+			Bukkit.getLogger().log(Level.SEVERE, "Could not load Configuration " + file.getName(), e);
 		}
 	}
 
@@ -53,26 +54,30 @@ public class UTFConfig extends YamlConfiguration {
 			Field representerField = Reflections.getField(getClass(), "yamlRepresenter");
 			Field yamlField = Reflections.getField(getClass(), "yaml");
 			
-			optionField.setAccessible(true);
-			representerField.setAccessible(true);
-			yamlField.setAccessible(true);
-			
-			DumperOptions yamlOptions = (DumperOptions) optionField.get(this);
-			Representer yamlRepresenter = (Representer) representerField.get(this);
-			Yaml yaml = (Yaml) yamlField.get(this);
-			DumperOptions.FlowStyle flow = DumperOptions.FlowStyle.BLOCK;
-			
-			yamlOptions.setIndent(this.options().indent());
-			yamlOptions.setDefaultFlowStyle(flow);
-			yamlOptions.setAllowUnicode(true);
-			yamlRepresenter.setDefaultFlowStyle(flow);
-			
-			String header = this.buildHeader();
-			String dump = yaml.dump(this.getValues(false));
-			
-			if(dump.equals("{}\n"))dump = "";
-			return header + dump;
-		} catch (Exception e) {e.printStackTrace();}
+			if(optionField != null && representerField != null && yamlField != null) {
+				optionField.setAccessible(true);
+				representerField.setAccessible(true);
+				yamlField.setAccessible(true);
+				
+				DumperOptions yamlOptions = (DumperOptions) optionField.get(this);
+				Representer yamlRepresenter = (Representer) representerField.get(this);
+				Yaml yaml = (Yaml) yamlField.get(this);
+				DumperOptions.FlowStyle flow = DumperOptions.FlowStyle.BLOCK;
+				
+				yamlOptions.setIndent(this.options().indent());
+				yamlOptions.setDefaultFlowStyle(flow);
+				yamlOptions.setAllowUnicode(true);
+				yamlRepresenter.setDefaultFlowStyle(flow);
+				
+				String header = this.buildHeader();
+				String dump = yaml.dump(this.getValues(false));
+				
+				if(dump.equals("{}\n"))dump = "";
+				return header + dump;
+			}
+		} catch (Exception e) {
+			Bukkit.getLogger().log(Level.SEVERE, "Error in converting Configuration to String", e);
+		}
 		return "Error: Cannot be saved to String";
 	}
 	
@@ -84,9 +89,9 @@ public class UTFConfig extends YamlConfiguration {
 	
 	public static class Reflections {
 	    
-	    public static Field modifiers = getField( Field.class, "modifiers" );
+	    public static final Field modifiers = getField( Field.class, "modifiers" );
 
-	    {
+	    public Reflections() {
 	        setAccessible( true, modifiers );
 	    }
 
@@ -114,18 +119,20 @@ public class UTFConfig extends YamlConfiguration {
 	            Object playerConnection = playerHandle.getClass().getField( "playerConnection" ).get( playerHandle );
 	            playerConnection.getClass().getMethod( "sendPacket", getNMSClass( "Packet" ) ).invoke( playerConnection, packet );
 	        } catch ( Exception e ) {
-	            e.printStackTrace();
+	        	Bukkit.getLogger().log(Level.INFO, "Could not send Packet to Player " + to.getName(), e);
 	        }
 	    }
 
 	    public void setField( Object change, String name, Object to ) {
 	        try {
 	            Field field = getField( change.getClass(), name );
-	            setAccessible( true, field );
-	            field.set( change, to );
-	            setAccessible( false, field);
+	            if(field != null) {
+		            setAccessible( true, field );
+		            field.set( change, to );
+		            setAccessible( false, field);
+	            }
 	        } catch( Exception ex ) {
-	            ex.printStackTrace();
+	        	Bukkit.getLogger().log(Level.SEVERE, "Could not set Value " + to.getClass().getName() + " in Field " + name + " in Class " + change.getClass().getName(), ex);
 	        }
 	    }
 
@@ -139,21 +146,15 @@ public class UTFConfig extends YamlConfiguration {
 	                }
 	            }
 	        } catch( Exception ex ) {
-	            ex.printStackTrace();
+	        	Bukkit.getLogger().log(Level.WARNING, "Could not set Fields accessible", ex);
 	        }
 	    }
 
 	    public static Field getField( Class< ? > clazz, String name ) {
 	        Field field = null;
-
 	        for( Field f : getFields( clazz ) ) {
-	            if( !f.getName().equals( name ) )
-	                continue;
-
-	            field = f;
-	            break;
+	            if(f.getName().equals( name )) field = f;
 	        }
-
 	        return field;
 	    }
 
@@ -171,8 +172,7 @@ public class UTFConfig extends YamlConfiguration {
 	    }
 	    
 	    public String getVersion() {
-    		String ver = Bukkit.getServer().getClass().getPackage().getName().split( "\\." )[ 3 ];
-    		return ver;
+    		return Bukkit.getServer().getClass().getPackage().getName().split( "\\." )[ 3 ];
 	    }
 	}
 }
